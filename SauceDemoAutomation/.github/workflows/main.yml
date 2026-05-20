@@ -61,3 +61,41 @@ jobs:
         with:
           name: extent-report
           path: SauceDemoAutomation/Report/Extent.html
+
+      - name: Download Artifacts
+        if: always()
+        run: |
+          mkdir -p reports
+          cp -r SauceDemoAutomation/target/surefire-reports reports/ 2>/dev/null || true
+          cp SauceDemoAutomation/Report/Extent.html reports/ 2>/dev/null || true
+
+      - name: Send Email with Reports
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.EMAIL_SERVER }}
+          server_port: ${{ secrets.EMAIL_PORT }}
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: TestNG Automation Test Results - ${{ github.repository }} - ${{ github.run_number }}
+          to: ajeetgaurav100@gmail.com
+          from: ${{ secrets.EMAIL_FROM }}
+          body: |
+            Hi,
+
+            TestNG Automation tests have completed for repository: ${{ github.repository }}
+            
+            Run Number: ${{ github.run_number }}
+            Commit SHA: ${{ github.sha }}
+            Branch: ${{ github.ref }}
+            Actor: ${{ github.actor }}
+            
+            Test Artifacts:
+            - TestNG Reports: surefire-reports directory
+            - Extent Report: Extent.html
+            
+            Please find the attached test reports.
+            
+            Best regards,
+            GitHub Actions
+          attachments: reports/*
